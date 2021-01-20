@@ -224,7 +224,7 @@ def main():
                 if centrecom_stock.get(i) is None:
                     centrecom_stock[i] = 0
                 centrecom_result = centrecom(i)
-                if centrecom_result == 2 and scorptec_stock.get(i) != 2:
+                if centrecom_result == 2 and centrecom_stock.get(i) != 2:
                     centrecom_stock[i] = 2
                     send_gmail(gmail_username, gmail_app_password, gmail_to, "Python Stock Alert",
                                f" Centrecom Item {i} has Stock Available")

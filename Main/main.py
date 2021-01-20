@@ -3,11 +3,15 @@ import smtplib
 import requests
 from bs4 import BeautifulSoup
 
+logging = 1
+
 
 def log(file_name, data_to_log):
-    with open(file_name, "a") as file:
-        file.write("\n")
-        file.write(str(str(time.strftime('[%a %d-%m-%Y %H:%M:%S]', time.gmtime())).upper()) + ":" + str(data_to_log))
+    if logging != 0:
+        with open(file_name, "a") as file:
+            file.write("\n")
+            file.write(
+                str(str(time.strftime('[%a %d-%m-%Y %H:%M:%S]', time.gmtime())).upper()) + ":" + str(data_to_log))
 
 
 def read_file(file_name):
@@ -172,76 +176,134 @@ def centrecom(url):
 def main():
     with open("log.txt", "a+") as file:
         file.write("\n\nNEW SESSION")
+    log("log.txt", "Reading Url Files")
     pccg_urls = read_file("pccg_urls.txt").split("\n")
     scorptec_urls = read_file("scorptec_urls.txt").split("\n")
     centrecom_urls = read_file("centrecom_urls.txt").split("\n")
     gmail_settings = read_file("gmail_settings.txt").split("\n")
+    log("log.txt", "Url Files Read")
+    log("log.txt", "Getting Gmail Settings")
     gmail_username = gmail_settings[0][15:]
     gmail_app_password = gmail_settings[1][19:]
     gmail_to = gmail_settings[2][3:]
+    log("log.txt", "Gmail Settings Created")
     pccg_stock = {}
     scorptec_stock = {}
     centrecom_stock = {}
+    log("log.txt", "Starting Loop")
+    loop_count = 0
     while True:
+        log("log.txt", f"Loop Start, Loop Number: {loop_count}")
+
         if pccg_urls[0] != "":
+            log("log.txt", "pccg_urls.txt not empty beginning scraping")
             for i in pccg_urls:
                 if pccg_stock.get(i) is None:
+                    log("log.txt", f"{i} not in dict adding to dict")
                     pccg_stock[i] = 0
+                log("log.txt", f"current value in dict is {pccg_stock.get(i)}")
+                log("log.txt", f"getting {i} data")
                 pccg_result = pccg(i)
+                log("log.txt", f"data received response is {pccg_result}")
                 if pccg_result == 2 and pccg_stock.get(i) != 2:
                     pccg_stock[i] = 2
+                    log("log.txt", "value in dict changed to 2")
+                    log("log.txt", "sending gmail")
                     send_gmail(gmail_username, gmail_app_password, gmail_to,
                                "Python Stock Alert", f"PCCG Item {i} has Stock Available")
+                    log("log.txt", "gmail sent")
                 if pccg_result == 1 and pccg_stock.get(i) != 1:
                     pccg_stock[i] = 1
+                    log("log.txt", "value in dict changed to 1")
+                    log("log.txt", "sending gmail")
                     send_gmail(gmail_username, gmail_app_password, gmail_to,
                                "Python Stock Alert", f"PCCG Item {i} is Available for Pre-Order")
+                    log("log.txt", "gmail sent")
                 if pccg_result == 404 and pccg_stock.get(i) != 404:
                     pccg_stock[i] = 404
+                    log("log.txt", "value in dict changed to 404")
+                    log("log.txt", "sending gmail")
                     send_gmail(gmail_username, gmail_app_password, gmail_to,
                                "Python Stock Alert ERROR", f"ERROR url: {i} is invalid")
+                    log("log.txt", "gmail sent")
                 pccg_stock[i] = pccg_result
+
         if scorptec_urls[0] != "":
+            log("log.txt", "scorptec_urls.txt not empty beginning scraping")
             for i in scorptec_urls:
                 if scorptec_stock.get(i) is None:
                     scorptec_stock[i] = 0
+                    log("log.txt", f"{i} not in dict adding to dict")
+                log("log.txt", f"current value in dict is {scorptec_stock.get(i)}")
+                log("log.txt", f"getting {i} data")
                 scorptec_result = scorptec(i)
+                log("log.txt", f"data received response is {scorptec_result}")
                 if scorptec_result == 2 and scorptec_stock.get(i) != 2:
                     scorptec_stock[i] = 2
+                    log("log.txt", "value in dict changed to 2")
+                    log("log.txt", "sending gmail")
                     send_gmail(gmail_username, gmail_app_password, gmail_to,
                                "Python Stock Alert", f"Scorptec Item {i} has Stock Available")
-                if scorptec_result == 1 and scorptec_stock.get(i) != 2:
+                    log("log.txt", "gmail sent")
+                if scorptec_result == 1 and scorptec_stock.get(i) != 1:
                     scorptec_stock[i] = 1
+                    log("log.txt", "value in dict changed to 1")
+                    log("log.txt", "sending gmail")
                     send_gmail(gmail_username, gmail_app_password, gmail_to,
                                "Python Stock Alert", f"Scorptec Item {i} is Available for Pre-Order")
+                    log("log.txt", "gmail sent")
                 if scorptec_result == 404 and scorptec_stock.get(i) != 404:
                     scorptec_stock[i] = 404
+                    log("log.txt", "value in dict changed to 404")
+                    log("log.txt", "sending gmail")
                     send_gmail(gmail_username, gmail_app_password, gmail_to,
                                "Python Stock Alert", f"ERROR url: {i} is invalid")
+                    log("log.txt", "gmail sent")
                 scorptec_stock[i] = scorptec_result
+
         if centrecom_urls[0] != "":
+            log("log.txt", "centrecom_urls.txt not empty beginning scraping")
             for i in centrecom_urls:
                 if centrecom_stock.get(i) is None:
                     centrecom_stock[i] = 0
+                    log("log.txt", f"{i} not in dict adding to dict")
+                log("log.txt", f"current value in dict is {centrecom_stock.get(i)}")
+                log("log.txt", f"getting {i} data")
                 centrecom_result = centrecom(i)
+                log("log.txt", f"data received response is {centrecom_result}")
                 if centrecom_result == 2 and centrecom_stock.get(i) != 2:
                     centrecom_stock[i] = 2
+                    log("log.txt", "value in dict changed to 2")
+                    log("log.txt", "sending gmail")
                     send_gmail(gmail_username, gmail_app_password, gmail_to, "Python Stock Alert",
                                f" Centrecom Item {i} has Stock Available")
+                    log("log.txt", "gmail sent")
                 if centrecom_result == 1 and centrecom_stock.get(i) != 1:
                     centrecom_stock[i] = 1
+                    log("log.txt", "value in dict changed to 1")
+                    log("log.txt", "sending gmail")
                     send_gmail(gmail_username, gmail_app_password, gmail_to, "Python Stock Alert",
                                f"Centrecom Item {i} is Available for Pre-Order")
+                    log("log.txt", "gmail sent")
                 if centrecom_result == 404 and centrecom_stock.get(i) != 404:
                     centrecom_stock[i] = 404
+                    log("log.txt", "value in dict changed to 404")
+                    log("log.txt", "sending gmail")
                     send_gmail(gmail_username, gmail_app_password, gmail_to, "Python Stock Alert",
                                f" ERROR url: {i} is invalid")
+                    log("log.txt", "gmail sent")
                 if centrecom_result == 3 and centrecom_stock.get(i) != 3:
                     centrecom_stock[i] = 3
+                    log("log.txt", "value in dict changed to 3")
+                    log("log.txt", "sending gmail")
                     send_gmail(gmail_username, gmail_app_password, gmail_to, "Python Stock Alert",
                                f"Centrecom Item {i} is Available In Store")
+                    log("log.txt", "gmail sent")
                 centrecom_stock[i] = centrecom_result
+        log("log.txt", "Waiting For 30 Seconds before starting loop again")
         time.sleep(30)
+        log("log.txt", "Loop end adding 1 to loop start")
+        loop_count += 1 
 
 
 if __name__ == '__main__':

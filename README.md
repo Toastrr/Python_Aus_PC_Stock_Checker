@@ -1,7 +1,7 @@
 # Python_Aus_PC_Stock_Checker
 This is an Python Application made to check stock on pc retailer websites in Austalia
 This application sends a gmail from an gmail address to another when stock has changed
-This Application Currently only support scorptec, pccg and centrecom
+This Application Currently only support scorptec, pccg centrecom and pcpartpicker
 
 Place Urls seperated by a space for each website into each text file
 

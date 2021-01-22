@@ -3,12 +3,12 @@ import smtplib
 import requests
 from bs4 import BeautifulSoup
 
-logging = 1
+logging = 0
 
 
 def log(file_name, data_to_log):
     if logging != 0:
-        with open(file_name, "a") as file:
+        with open(file_name, "a+") as file:
             file.write("\n")
             file.write(
                 str(str(time.strftime('[%a %d-%m-%Y %H:%M:%S]', time.gmtime())).upper()) + ":" + str(data_to_log))
@@ -17,6 +17,18 @@ def log(file_name, data_to_log):
 def read_file(file_name):
     with open(file_name, "r") as file:
         return file.read()
+
+
+def create_file_if_it_doesnt_exist(filename, content=None):
+    try:
+        with open(filename, "r") as file:
+            file.read()
+    except FileNotFoundError:
+        with open(filename, "w+") as file:
+            if not content:
+                file.write("")
+            else:
+                file.write(content)
 
 
 def is_int(string):
@@ -35,16 +47,6 @@ def send_gmail(email_from, password_from, email_to, email_subject, email_body):
     email_content = str(
         f"From: {str(email_from)}\nTo: {str(email_to)}\nSubject: {str(email_subject)}\n\n{str(email_body)}")
     gmail_server.sendmail(email_from, email_to, email_content)
-
-
-# PCCG Test URLS
-# pre "https://www.pccasegear.com/products/51041/phanteks-enthoo-pro-2-closed-panel-full-tower-case-black"
-# sold out "https://www.pccasegear.com/products/51766/gigabyte-geforce-rtx-3080-vision-oc-10gb"
-# in stock "https://www.pccasegear.com/products/51821/8ware-hdmi-1-4-cable-1-8m"
-
-pccg_test_urls = ["https://www.pccasegear.com/products/51821/8ware-hdmi-1-4-cable-1-8m",
-                  "https://www.pccasegear.com/products/51041/phanteks-enthoo-pro-2-closed-panel-full-tower-case-black",
-                  "https://www.pccasegear.com/products/51766/gigabyte-geforce-rtx-3080-vision-oc-10gb"]
 
 
 def pccg(url):
@@ -66,28 +68,6 @@ def pccg(url):
         return 404
 
 
-# for i in pccg_test_urls:
-# print(pccg(i))
-
-# Expected output 2 1 0
-
-# Scorptec Test URLS
-# pre "https://www.scorptec.com.au/product/headphones/accessories/82212-mpa-gs750-00-i1"
-# eta "https://www.scorptec.com.au/product/monitors/25plus-inch/84342-34wn750-b"
-# at supplier "https://www.scorptec.com.au/product/cases/atx/74070-ca-3k7-50m1na-00"
-# sold out "https://www.scorptec.com.au/product/graphics-cards/nvidia/85382-rog-strix-rtx3080-o10g-gaming"
-# in stock "https://www.scorptec.com.au/product/branded-systems/gaming-systems/85679-meg-infinite-x-10te-850au"
-# 1 "https://www.scorptec.com.au/product/laptops-&-notebooks/laptops/81236-7qz78pa"
-
-scorptec_test_urls = [
-    "https://www.scorptec.com.au/product/branded-systems/gaming-systems/85679-meg-infinite-x-10te-850au",
-    "https://www.scorptec.com.au/product/laptops-&-notebooks/laptops/81236-7qz78pa",
-    "https://www.scorptec.com.au/product/cases/atx/74070-ca-3k7-50m1na-00",
-    "https://www.scorptec.com.au/product/monitors/25plus-inch/84342-34wn750-b",
-    "https://www.scorptec.com.au/product/headphones/accessories/82212-mpa-gs750-00-i1",
-    "https://www.scorptec.com.au/product/graphics-cards/nvidia/85382-rog-strix-rtx3080-o10g-gaming"]
-
-
 def scorptec(url):
     page = requests.get(url)
     parse = BeautifulSoup(page.content, 'html.parser')
@@ -106,42 +86,6 @@ def scorptec(url):
             return 404
     except AttributeError:
         return 404
-
-
-# for i in scorptec_test_urls:
-# print(scorptec(i))
-
-# Expected output 2 2 2 1 1 0
-
-# Mwave Test Urls
-# in stock "https://www.mwave.com.au/product/warzone-geforce-esports-pro-gaming-pc-rtx-3060-ti-edition-ac40581"
-# at supplier "https://www.mwave.com.au/product/ekwb-ekquantum-vector-drgb-xc3-rtx-30803090-gpu-water-
-#                                                                                           block-nickel-acetal-ac40364"
-# sold out "https://www.mwave.com.au/product/asus-geforce-rtx-3080-rog-strix-oc-10gb-video-card-ac38206"
-# pre "https://www.mwave.com.au/product/gigabyte-aorus-geforce-rtx-3080-waterforce-10gb-gaming-box-ac40415"
-
-
-# def mwave(url):
-# page = requests.get(url)
-# parse = BeautifulSoup(page.content, 'html.parser')
-# print(parse)
-# stock_level = parse.find("div", class_="basicInfos").text.split("\n\n")[0].strip()
-# print(stock_level)
-
-
-# mwave("https://www.mwave.com.au/product/warzone-geforce-esports-pro-gaming-pc-rtx-3060-ti-edition-ac40581")
-
-# Centrecom Test URLS
-# in stock "https://www.centrecom.com.au/cooler-master-masterbox-td500-argb-mesh-case"
-# pre "https://www.centrecom.com.au/thermaltake-suppressor-f1-mini-itx-case"
-# sold out "https://www.centrecom.com.au/msi-geforce-rtx-3080-gaming-x-trio-10g-graphics-card#popup_stock"
-# in store "https://www.centrecom.com.au/silverstone-sugo-series-sg13-mini-itx-case-blackwhitemesh-front-panel"
-
-centrecom_test_urls = ["https://www.centrecom.com.au/cooler-master-masterbox-td500-argb-mesh-case",
-                       "https://www.centrecom.com.au/thermaltake-suppressor-f1-mini-itx-case",
-                       "https://www.centrecom.com.au/silverstone-sugo-series-sg13-mini-itx-case-blackwhitemesh-front"
-                       "-panel",
-                       "https://www.centrecom.com.au/msi-geforce-rtx-3080-gaming-x-trio-10g-graphics-card#popup_stock"]
 
 
 def centrecom(url):
@@ -167,20 +111,46 @@ def centrecom(url):
             return 404
 
 
-# for i in centrecom_test_urls:
-# print(centrecom(i))
-
-# Expected output 2 1 3 0
+def pc_part_picker(url):
+    page = requests.get(url)
+    parse = BeautifulSoup(page.content, 'html.parser')
+    try:
+        stock_levels = [i.strip() for i in parse.find("table", class_="xs-col-12").text.split("\n\n") if i][1:]
+        in_stock = 0
+        preorder = 0
+        out_of_stock = 0
+        for i in stock_levels:
+            if i == "In stock":
+                in_stock += 1
+            elif i == "Preorder":
+                preorder += 1
+            elif i == "Out of stock":
+                out_of_stock += 1
+            else:
+                continue
+        if in_stock > 0:
+            return in_stock + 2
+        elif preorder > 0:
+            return 1
+        else:
+            return 0
+    except AttributeError:
+        return 404
 
 
 def main():
-    with open("log.txt", "a+") as file:
-        file.write("\n\nNEW SESSION")
+    log("log.txt", "\n\nNEW SESSION")
+    create_file_if_it_doesnt_exist("gmail_settings.txt", content="gmail_username=\ngmail_app_password=\nto=")
+    create_file_if_it_doesnt_exist("pccg_urls.txt")
+    create_file_if_it_doesnt_exist("scorptec_urls.txt")
+    create_file_if_it_doesnt_exist("centrecom_urls.txt")
+    create_file_if_it_doesnt_exist("pcpartpicker_urls.txt")
+    gmail_settings = read_file("gmail_settings.txt").split("\n")
     log("log.txt", "Reading Url Files")
     pccg_urls = read_file("pccg_urls.txt").split("\n")
     scorptec_urls = read_file("scorptec_urls.txt").split("\n")
     centrecom_urls = read_file("centrecom_urls.txt").split("\n")
-    gmail_settings = read_file("gmail_settings.txt").split("\n")
+    pcpartpicker_urls = read_file("pcpartpicker_urls.txt").split("\n")
     log("log.txt", "Url Files Read")
     log("log.txt", "Getting Gmail Settings")
     gmail_username = gmail_settings[0][15:]
@@ -190,6 +160,7 @@ def main():
     pccg_stock = {}
     scorptec_stock = {}
     centrecom_stock = {}
+    pcpartpicker_stock = {}
     log("log.txt", "Starting Loop")
     loop_count = 0
     while True:
@@ -300,10 +271,44 @@ def main():
                                f"Centrecom Item {i} is Available In Store")
                     log("log.txt", "gmail sent")
                 centrecom_stock[i] = centrecom_result
+
+        if pcpartpicker_urls[0] != "":
+            log("log.txt", "pcpartpicker_urls.txt not empty beginning scraping")
+            for i in pcpartpicker_urls:
+                if pcpartpicker_stock.get(i) is None:
+                    pcpartpicker_stock[i] = 0
+                    log("log.txt", f"{i} not in dict adding to dict")
+                log("log.txt", f"current value in dict is {pcpartpicker_stock.get(i)}")
+                log("log.txt", f"getting {i} data")
+                pcpartpicker_result = pc_part_picker(i)
+                log("log.txt", f"data received response is {pcpartpicker_result}")
+                if pcpartpicker_result >= 2 > pcpartpicker_stock.get(i):
+                    pcpartpicker_stock[i] = pcpartpicker_result
+                    log("log.txt", f"value in dict changed to {pcpartpicker_result}")
+                    log("log.txt", "sending gmail")
+                    send_gmail(gmail_username, gmail_app_password, gmail_to, "Python Stock Alert",
+                               f" PCPartPicker Item {i} is available in {pcpartpicker_result -2 } number of retailers")
+                    log("log.txt", "gmail sent")
+                if pcpartpicker_result == 1 and pcpartpicker_stock.get(i) != 1:
+                    pcpartpicker_stock[i] = 1
+                    log("log.txt", "value in dict changed to 1")
+                    log("log.txt", "sending gmail")
+                    send_gmail(gmail_username, gmail_app_password, gmail_to, "Python Stock Alert",
+                               f"PCPartPicker Item {i} is Available for Pre-Order")
+                    log("log.txt", "gmail sent")
+                if pcpartpicker_result == 404 and pcpartpicker_stock.get(i) != 404:
+                    pcpartpicker_stock[i] = 404
+                    log("log.txt", "value in dict changed to 404")
+                    log("log.txt", "sending gmail")
+                    send_gmail(gmail_username, gmail_app_password, gmail_to, "Python Stock Alert",
+                               f" ERROR url: {i} is invalid")
+                    log("log.txt", "gmail sent")
+                pcpartpicker_stock[i] = pcpartpicker_result
+
         log("log.txt", "Waiting For 30 Seconds before starting loop again")
         time.sleep(30)
         log("log.txt", "Loop end adding 1 to loop start")
-        loop_count += 1 
+        loop_count += 1
 
 
 if __name__ == '__main__':

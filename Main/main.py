@@ -1,6 +1,7 @@
 import time
 import smtplib
 import requests
+import json
 from bs4 import BeautifulSoup
 
 logging = 0
@@ -17,6 +18,20 @@ def log(file_name, data_to_log):
 def read_file(file_name):
     with open(file_name, "r") as file:
         return file.read()
+
+
+def write_json(file_name, dictionary):
+    with open(file_name, "w+") as file:
+        file.write(json.dumps(dictionary))
+
+
+def read_json(file_name):
+    try:
+        with open(file_name, "r+") as file:
+            return json.loads(file.read())
+    except FileNotFoundError:
+        write_json(file_name, {})
+        return {}
 
 
 def create_file_if_it_doesnt_exist(filename, content=None):
@@ -111,7 +126,7 @@ def centrecom(url):
             return 404
 
 
-def pc_part_picker(url):
+def pcpartpicker(url):
     page = requests.get(url)
     parse = BeautifulSoup(page.content, 'html.parser')
     try:
@@ -157,10 +172,10 @@ def main():
     gmail_app_password = gmail_settings[1][19:]
     gmail_to = gmail_settings[2][3:]
     log("log.txt", "Gmail Settings Created")
-    pccg_stock = {}
-    scorptec_stock = {}
-    centrecom_stock = {}
-    pcpartpicker_stock = {}
+    pccg_stock = read_json("pccg_stock_json.txt")
+    scorptec_stock = read_json("scorptec_stock_json.txt")
+    centrecom_stock = read_json("centrecom_stock_json.txt")
+    pcpartpicker_stock = read_json("pcpartpicker_stock_json.txt")
     log("log.txt", "Starting Loop")
     loop_count = 0
     while True:
@@ -198,6 +213,7 @@ def main():
                                "Python Stock Alert ERROR", f"ERROR url: {i} is invalid")
                     log("log.txt", "gmail sent")
                 pccg_stock[i] = pccg_result
+                write_json("pccg_stock_json.txt", pccg_stock)
 
         if scorptec_urls[0] != "":
             log("log.txt", "scorptec_urls.txt not empty beginning scraping")
@@ -231,6 +247,7 @@ def main():
                                "Python Stock Alert", f"ERROR url: {i} is invalid")
                     log("log.txt", "gmail sent")
                 scorptec_stock[i] = scorptec_result
+                write_json("scorptec_stock_json.txt", scorptec_stock)
 
         if centrecom_urls[0] != "":
             log("log.txt", "centrecom_urls.txt not empty beginning scraping")
@@ -271,6 +288,7 @@ def main():
                                f"Centrecom Item {i} is Available In Store")
                     log("log.txt", "gmail sent")
                 centrecom_stock[i] = centrecom_result
+                write_json("centrecom_stock_json.txt", centrecom_stock)
 
         if pcpartpicker_urls[0] != "":
             log("log.txt", "pcpartpicker_urls.txt not empty beginning scraping")
@@ -280,7 +298,7 @@ def main():
                     log("log.txt", f"{i} not in dict adding to dict")
                 log("log.txt", f"current value in dict is {pcpartpicker_stock.get(i)}")
                 log("log.txt", f"getting {i} data")
-                pcpartpicker_result = pc_part_picker(i)
+                pcpartpicker_result = pcpartpicker(i)
                 log("log.txt", f"data received response is {pcpartpicker_result}")
                 if pcpartpicker_result >= 2 > pcpartpicker_stock.get(i):
                     pcpartpicker_stock[i] = pcpartpicker_result
@@ -304,6 +322,7 @@ def main():
                                f" ERROR url: {i} is invalid")
                     log("log.txt", "gmail sent")
                 pcpartpicker_stock[i] = pcpartpicker_result
+                write_json("pcpartpicker_stock_json.txt", pcpartpicker_stock)
 
         log("log.txt", "Waiting For 30 Seconds before starting loop again")
         time.sleep(30)

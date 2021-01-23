@@ -4,15 +4,18 @@ import requests
 import json
 from bs4 import BeautifulSoup
 
-logging = 0
+logging = False
+verbose = False
 
 
 def log(file_name, data_to_log):
-    if logging != 0:
+    if logging:
         with open(file_name, "a+") as file:
             file.write("\n")
             file.write(
                 str(str(time.strftime('[%a %d-%m-%Y %H:%M:%S]', time.gmtime())).upper()) + ":" + str(data_to_log))
+    if verbose:
+        print(data_to_log)
 
 
 def read_file(file_name):
@@ -155,30 +158,51 @@ def pcpartpicker(url):
 
 def main():
     log("log.txt", "\n\nNEW SESSION")
+    print("Program Starting...")
+
     create_file_if_it_doesnt_exist("gmail_settings.txt", content="gmail_username=\ngmail_app_password=\nto=")
     create_file_if_it_doesnt_exist("pccg_urls.txt")
     create_file_if_it_doesnt_exist("scorptec_urls.txt")
     create_file_if_it_doesnt_exist("centrecom_urls.txt")
     create_file_if_it_doesnt_exist("pcpartpicker_urls.txt")
+
     gmail_settings = read_file("gmail_settings.txt").split("\n")
+
     log("log.txt", "Reading Url Files")
     pccg_urls = read_file("pccg_urls.txt").split("\n")
     scorptec_urls = read_file("scorptec_urls.txt").split("\n")
     centrecom_urls = read_file("centrecom_urls.txt").split("\n")
     pcpartpicker_urls = read_file("pcpartpicker_urls.txt").split("\n")
     log("log.txt", "Url Files Read")
+
     log("log.txt", "Getting Gmail Settings")
     gmail_username = gmail_settings[0][15:]
     gmail_app_password = gmail_settings[1][19:]
     gmail_to = gmail_settings[2][3:]
+    if not gmail_to or not gmail_app_password or not gmail_username:
+        log("log.txt", "invalid gmail setting detected, gmails will not be sent")
+        print("\nInvalid Gmail Settings Detected")
+        print("Ensure you have entered your email details in gmail_settings.txt")
+        print("Also Ensure you have used an app password for mail and not your regular password")
+        print("Restart This Program after you ensured you have entered the correct settings")
+        print("\nEmails WILL NOT be sent")
+        send = False
+    else:
+        log("log.txt", "valid gmail settings detected, gmails will be sent")
+        send = True
     log("log.txt", "Gmail Settings Created")
+
+    log("log.txt", "reading/creating json files")
     pccg_stock = read_json("pccg_stock_json.txt")
     scorptec_stock = read_json("scorptec_stock_json.txt")
     centrecom_stock = read_json("centrecom_stock_json.txt")
     pcpartpicker_stock = read_json("pcpartpicker_stock_json.txt")
+    log("log.txt", "read/created json files")
+
     log("log.txt", "Starting Loop")
     loop_count = 0
     while True:
+        print("\nChecking Stock Levels\n")
         log("log.txt", f"Loop Start, Loop Number: {loop_count}")
 
         if pccg_urls[0] != "":
@@ -191,27 +215,43 @@ def main():
                 log("log.txt", f"getting {i} data")
                 pccg_result = pccg(i)
                 log("log.txt", f"data received response is {pccg_result}")
+
                 if pccg_result == 2 and pccg_stock.get(i) != 2:
                     pccg_stock[i] = 2
                     log("log.txt", "value in dict changed to 2")
-                    log("log.txt", "sending gmail")
-                    send_gmail(gmail_username, gmail_app_password, gmail_to,
-                               "Python Stock Alert", f"PCCG Item {i} has Stock Available")
-                    log("log.txt", "gmail sent")
+                    print(f"PCCG Item {i} has Stock Available")
+                    if send:
+                        log("log.txt", "sending gmail")
+                        send_gmail(gmail_username, gmail_app_password, gmail_to,
+                                   "Python Stock Alert", f"PCCG Item {i} has Stock Available")
+                        log("log.txt", "gmail sent")
+                    else:
+                        log("log.txt", "email settings not valid not sending email")
+
                 if pccg_result == 1 and pccg_stock.get(i) != 1:
                     pccg_stock[i] = 1
                     log("log.txt", "value in dict changed to 1")
-                    log("log.txt", "sending gmail")
-                    send_gmail(gmail_username, gmail_app_password, gmail_to,
-                               "Python Stock Alert", f"PCCG Item {i} is Available for Pre-Order")
-                    log("log.txt", "gmail sent")
+                    print(f"PCCG Item {i} is Available for Pre-Order")
+                    if send:
+                        log("log.txt", "sending gmail")
+                        send_gmail(gmail_username, gmail_app_password, gmail_to,
+                                   "Python Stock Alert", f"PCCG Item {i} is Available for Pre-Order")
+                        log("log.txt", "gmail sent")
+                    else:
+                        log("log.txt", "email settings not valid not sending email")
+
                 if pccg_result == 404 and pccg_stock.get(i) != 404:
                     pccg_stock[i] = 404
                     log("log.txt", "value in dict changed to 404")
-                    log("log.txt", "sending gmail")
-                    send_gmail(gmail_username, gmail_app_password, gmail_to,
-                               "Python Stock Alert ERROR", f"ERROR url: {i} is invalid")
-                    log("log.txt", "gmail sent")
+                    print(f"ERROR url: {i} is invalid")
+                    if send:
+                        log("log.txt", "sending gmail")
+                        send_gmail(gmail_username, gmail_app_password, gmail_to,
+                                   "Python Stock Alert ERROR", f"ERROR url: {i} is invalid")
+                        log("log.txt", "gmail sent")
+                    else:
+                        log("log.txt", "email settings not valid not sending email")
+
                 pccg_stock[i] = pccg_result
                 write_json("pccg_stock_json.txt", pccg_stock)
 
@@ -225,29 +265,45 @@ def main():
                 log("log.txt", f"getting {i} data")
                 scorptec_result = scorptec(i)
                 log("log.txt", f"data received response is {scorptec_result}")
+
                 if scorptec_result == 2 and scorptec_stock.get(i) != 2:
                     scorptec_stock[i] = 2
                     log("log.txt", "value in dict changed to 2")
-                    log("log.txt", "sending gmail")
-                    send_gmail(gmail_username, gmail_app_password, gmail_to,
-                               "Python Stock Alert", f"Scorptec Item {i} has Stock Available")
-                    log("log.txt", "gmail sent")
+                    print(f"Scorptec Item {i} has Stock Available")
+                    if send:
+                        log("log.txt", "sending gmail")
+                        send_gmail(gmail_username, gmail_app_password, gmail_to,
+                                   "Python Stock Alert", f"Scorptec Item {i} has Stock Available")
+                        log("log.txt", "gmail sent")
+                    else:
+                        log("log.txt", "email settings not valid not sending email")
+
                 if scorptec_result == 1 and scorptec_stock.get(i) != 1:
                     scorptec_stock[i] = 1
                     log("log.txt", "value in dict changed to 1")
-                    log("log.txt", "sending gmail")
-                    send_gmail(gmail_username, gmail_app_password, gmail_to,
-                               "Python Stock Alert", f"Scorptec Item {i} is Available for Pre-Order")
-                    log("log.txt", "gmail sent")
+                    print(f"Scorptec Item {i} is Available for Pre-Order")
+                    if send:
+                        log("log.txt", "sending gmail")
+                        send_gmail(gmail_username, gmail_app_password, gmail_to,
+                                   "Python Stock Alert", f"Scorptec Item {i} is Available for Pre-Order")
+                        log("log.txt", "gmail sent")
+                    else:
+                        log("log.txt", "email settings not valid not sending email")
+
                 if scorptec_result == 404 and scorptec_stock.get(i) != 404:
                     scorptec_stock[i] = 404
                     log("log.txt", "value in dict changed to 404")
-                    log("log.txt", "sending gmail")
-                    send_gmail(gmail_username, gmail_app_password, gmail_to,
-                               "Python Stock Alert", f"ERROR url: {i} is invalid")
-                    log("log.txt", "gmail sent")
+                    print(f"ERROR url: {i} is invalid")
+                    if send:
+                        log("log.txt", "sending gmail")
+                        send_gmail(gmail_username, gmail_app_password, gmail_to,
+                                   "Python Stock Alert", f"ERROR url: {i} is invalid")
+                        log("log.txt", "gmail sent")
+                    else:
+                        log("log.txt", "email settings not valid not sending email")
+
                 scorptec_stock[i] = scorptec_result
-                write_json("scorptec_stock_json.txt", scorptec_stock)
+            write_json("scorptec_stock_json.txt", scorptec_stock)
 
         if centrecom_urls[0] != "":
             log("log.txt", "centrecom_urls.txt not empty beginning scraping")
@@ -262,33 +318,53 @@ def main():
                 if centrecom_result == 2 and centrecom_stock.get(i) != 2:
                     centrecom_stock[i] = 2
                     log("log.txt", "value in dict changed to 2")
-                    log("log.txt", "sending gmail")
-                    send_gmail(gmail_username, gmail_app_password, gmail_to, "Python Stock Alert",
-                               f" Centrecom Item {i} has Stock Available")
-                    log("log.txt", "gmail sent")
+                    print(f"Centrecom Item {i} has Stock Available")
+                    if send:
+                        log("log.txt", "sending gmail")
+                        send_gmail(gmail_username, gmail_app_password, gmail_to, "Python Stock Alert",
+                                   f" Centrecom Item {i} has Stock Available")
+                        log("log.txt", "gmail sent")
+                    else:
+                        log("log.txt", "email settings not valid not sending email")
+
                 if centrecom_result == 1 and centrecom_stock.get(i) != 1:
                     centrecom_stock[i] = 1
                     log("log.txt", "value in dict changed to 1")
-                    log("log.txt", "sending gmail")
-                    send_gmail(gmail_username, gmail_app_password, gmail_to, "Python Stock Alert",
-                               f"Centrecom Item {i} is Available for Pre-Order")
-                    log("log.txt", "gmail sent")
+                    print(f"Centrecom Item {i} is Available for Pre-Order")
+                    if send:
+                        log("log.txt", "sending gmail")
+                        send_gmail(gmail_username, gmail_app_password, gmail_to, "Python Stock Alert",
+                                   f"Centrecom Item {i} is Available for Pre-Order")
+                        log("log.txt", "gmail sent")
+                    else:
+                        log("log.txt", "email settings not valid not sending email")
+
                 if centrecom_result == 404 and centrecom_stock.get(i) != 404:
                     centrecom_stock[i] = 404
                     log("log.txt", "value in dict changed to 404")
-                    log("log.txt", "sending gmail")
-                    send_gmail(gmail_username, gmail_app_password, gmail_to, "Python Stock Alert",
-                               f" ERROR url: {i} is invalid")
-                    log("log.txt", "gmail sent")
+                    if send:
+                        log("log.txt", "sending gmail")
+                        print(f"ERROR url: {i} is invalid")
+                        send_gmail(gmail_username, gmail_app_password, gmail_to, "Python Stock Alert",
+                                   f"ERROR url: {i} is invalid")
+                        log("log.txt", "gmail sent")
+                    else:
+                        log("log.txt", "email settings not valid not sending email")
+
                 if centrecom_result == 3 and centrecom_stock.get(i) != 3:
                     centrecom_stock[i] = 3
                     log("log.txt", "value in dict changed to 3")
-                    log("log.txt", "sending gmail")
-                    send_gmail(gmail_username, gmail_app_password, gmail_to, "Python Stock Alert",
-                               f"Centrecom Item {i} is Available In Store")
-                    log("log.txt", "gmail sent")
+                    print(f"Centrecom Item {i} is Available In Store")
+                    if send:
+                        log("log.txt", "sending gmail")
+                        send_gmail(gmail_username, gmail_app_password, gmail_to, "Python Stock Alert",
+                                   f"Centrecom Item {i} is Available In Store")
+                        log("log.txt", "gmail sent")
+                    else:
+                        log("log.txt", "email settings not valid not sending email")
+
                 centrecom_stock[i] = centrecom_result
-                write_json("centrecom_stock_json.txt", centrecom_stock)
+            write_json("centrecom_stock_json.txt", centrecom_stock)
 
         if pcpartpicker_urls[0] != "":
             log("log.txt", "pcpartpicker_urls.txt not empty beginning scraping")
@@ -300,31 +376,49 @@ def main():
                 log("log.txt", f"getting {i} data")
                 pcpartpicker_result = pcpartpicker(i)
                 log("log.txt", f"data received response is {pcpartpicker_result}")
+
                 if pcpartpicker_result >= 2 > pcpartpicker_stock.get(i):
                     pcpartpicker_stock[i] = pcpartpicker_result
                     log("log.txt", f"value in dict changed to {pcpartpicker_result}")
-                    log("log.txt", "sending gmail")
-                    send_gmail(gmail_username, gmail_app_password, gmail_to, "Python Stock Alert",
-                               f" PCPartPicker Item {i} is available in {pcpartpicker_result -2 } number of retailers")
-                    log("log.txt", "gmail sent")
+                    print(f"PCPartPicker Item {i} is available in {pcpartpicker_result - 2} number of retailers")
+                    if send:
+                        log("log.txt", "sending gmail")
+                        send_gmail(gmail_username, gmail_app_password, gmail_to, "Python Stock Alert",
+                                   f" PCPartPicker Item {i} is available in {pcpartpicker_result - 2} number of "
+                                   f"retailers")
+                        log("log.txt", "gmail sent")
+                    else:
+                        log("log.txt", "email settings not valid not sending email")
+
                 if pcpartpicker_result == 1 and pcpartpicker_stock.get(i) != 1:
                     pcpartpicker_stock[i] = 1
                     log("log.txt", "value in dict changed to 1")
-                    log("log.txt", "sending gmail")
-                    send_gmail(gmail_username, gmail_app_password, gmail_to, "Python Stock Alert",
-                               f"PCPartPicker Item {i} is Available for Pre-Order")
-                    log("log.txt", "gmail sent")
+                    print(f"PCPartPicker Item {i} is Available for Pre-Order")
+                    if send:
+                        log("log.txt", "sending gmail")
+                        send_gmail(gmail_username, gmail_app_password, gmail_to, "Python Stock Alert",
+                                   f"PCPartPicker Item {i} is Available for Pre-Order")
+                        log("log.txt", "gmail sent")
+                    else:
+                        log("log.txt", "email settings not valid not sending email")
+
                 if pcpartpicker_result == 404 and pcpartpicker_stock.get(i) != 404:
                     pcpartpicker_stock[i] = 404
                     log("log.txt", "value in dict changed to 404")
-                    log("log.txt", "sending gmail")
-                    send_gmail(gmail_username, gmail_app_password, gmail_to, "Python Stock Alert",
-                               f" ERROR url: {i} is invalid")
-                    log("log.txt", "gmail sent")
+                    print(f"ERROR url: {i} is invalid")
+                    if send:
+                        log("log.txt", "sending gmail")
+                        send_gmail(gmail_username, gmail_app_password, gmail_to, "Python Stock Alert",
+                                   f"ERROR url: {i} is invalid")
+                        log("log.txt", "gmail sent")
+                    else:
+                        log("log.txt", "email settings not valid not sending email")
+
                 pcpartpicker_stock[i] = pcpartpicker_result
-                write_json("pcpartpicker_stock_json.txt", pcpartpicker_stock)
+            write_json("pcpartpicker_stock_json.txt", pcpartpicker_stock)
 
         log("log.txt", "Waiting For 30 Seconds before starting loop again")
+        print("\nRe-Checking Stock in 30 Seconds")
         time.sleep(30)
         log("log.txt", "Loop end adding 1 to loop start")
         loop_count += 1
